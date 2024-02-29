@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Author;
-use App\Models\AuthorBook;
 use App\Models\Book;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -15,11 +14,16 @@ class BookController extends Controller
      */
     public function index(Request $request): View
     {
-        $search = $request->query("search");
-    
-        $booksList = AuthorBook::with("author", "book")->get();
-    
-        return view("books.index", compact("booksList", "search"));
+        $search = $request->query('search');
+        $authors = Author::all();
+
+        $books = Book::where('title', 'like', '%' . $search . '%')
+            ->orWhereHas('authors', function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })->with('authors')
+            ->get();
+
+        return view('books.index', compact('books', 'search', 'authors'));
     }
 
     /**
@@ -27,7 +31,7 @@ class BookController extends Controller
      */
     public function create()
     {
-        return view("books.create");
+        return view('books.create');
     }
 
     /**
@@ -35,26 +39,18 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
         $book = new Book();
         $book->title = $request->title;
+        $book->release_date = $request->release_date;
+        $book->available = $request->available;
         $book->save();
-    
+
         foreach ($request->authors as $authorName) {
             $author = Author::firstOrCreate(['name' => $authorName]);
             $book->authors()->attach($author->id);
         }
-    
-        return redirect()->route("home")->with('success', 'Author created successfully.');
-    }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-        return view("books.show", compact("id"));
+        return redirect()->route('home')->with('success', 'Author created successfully.');
     }
 
     /**
@@ -62,7 +58,9 @@ class BookController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $book = Book::find($id);
+
+        return view('books.edit', compact('id', 'book'));
     }
 
     /**
@@ -70,7 +68,20 @@ class BookController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $book = Book::find($id);
+        $book->title = $request->title;
+        $book->release_date = $request->release_date;
+        $book->available = $request->available;
+        $book->save();
+
+        $book->authors()->detach();
+
+        foreach ($request->authors as $authorName) {
+            $author = Author::firstOrCreate(['name' => $authorName]);
+            $book->authors()->attach($author->id);
+        }
+
+        return redirect()->route('home')->with('success', 'წარმატებით დარედაქტირდა');
     }
 
     /**
@@ -78,6 +89,9 @@ class BookController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $book = Book::find($id);
+        $book->delete();
+
+        return redirect()->back();
     }
 }
