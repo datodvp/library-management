@@ -9,15 +9,19 @@
         </label>
     </form>
     <section class="books_container">
-        @foreach ($books as $book)
-            <a href="{{ route('books.show', $book->id) }}" class="book_item">
-                {{ $book->title }}
-            </a>
-            <div>authors: @foreach ($book->authors as $author)
-                    {{ $author->name }}
-                @endforeach
+        @foreach ($booksList as $bookInfo)
+            <div>
+                <div>
+                    book: {{ $bookInfo->book->title }}
+                </div>
+                <div>
+                    author: {{ $bookInfo->author->name }}
+                </div>
+                <div>
+                    გამოშვების წელი: {{ $bookInfo->book->release_date }}
+                </div>
             </div>
-            <br />
+            <hr>
         @endforeach
     </section>
 </x-layout>

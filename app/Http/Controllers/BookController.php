@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Author;
+use App\Models\AuthorBook;
 use App\Models\Book;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -15,18 +17,9 @@ class BookController extends Controller
     {
         $search = $request->query("search");
     
-        if($search) {
-            $books = Book::where('title', 'like', "%$search%")
-                        ->orWhereHas('authors', function ($query) use ($search) {
-                            $query->where('name', 'like', "%$search%");
-                        })
-                        ->with('authors')
-                        ->get();
-        } else {
-            $books = Book::with('authors')->get();
-        }
+        $booksList = AuthorBook::with("author", "book")->get();
     
-        return view("books.index", compact("books", "search"));
+        return view("books.index", compact("booksList", "search"));
     }
 
     /**
@@ -42,7 +35,17 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        dd($request->all());
+        $book = new Book();
+        $book->title = $request->title;
+        $book->save();
+    
+        foreach ($request->authors as $authorName) {
+            $author = Author::firstOrCreate(['name' => $authorName]);
+            $book->authors()->attach($author->id);
+        }
+    
+        return redirect()->route("home")->with('success', 'Author created successfully.');
     }
 
     /**
