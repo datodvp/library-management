@@ -50,7 +50,7 @@ class BookController extends Controller
             $book->authors()->attach($author->id);
         }
 
-        return redirect()->route('home')->with('success', 'Author created successfully.');
+        return redirect()->route('home');
     }
 
     /**
@@ -81,7 +81,7 @@ class BookController extends Controller
             $book->authors()->attach($author->id);
         }
 
-        return redirect()->route('home')->with('success', 'წარმატებით დარედაქტირდა');
+        return redirect()->route('home');
     }
 
     /**
